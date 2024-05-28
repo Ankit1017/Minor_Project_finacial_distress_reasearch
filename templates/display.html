@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Analyzer</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: #dcdcdc; }
+        h1 { text-align: center; color: #50b3a2; }
+        #output { background-color: #1e1e1e; color: #dcdcdc; padding: 10px; border: 1px solid #333; height: 50vh; overflow-y: scroll; white-space: pre; }
+        .chart-container { width: 33%; display: flex; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Real-Time Analysis of Company Financial Distress with their Stock Price</h1>
+    <div id="output"></div>
+    <div class="chart-container">
+        <canvas id="rewardChart"></canvas>
+        <canvas id="holdsChart"></canvas>
+        <canvas id="sellsChart"></canvas>
+    </div>
+
+    <script type="text/javascript">
+        var filePath = new URLSearchParams(window.location.search).get('file_path');
+        var eventSource = new EventSource("/stream?file_path=" + encodeURIComponent(filePath));
+        var rewards = [];
+        var holds = [];
+        var sells = [];
+        var labels = [];
+
+        var rewardCtx = document.getElementById('rewardChart').getContext('2d');
+        var rewardChart = new Chart(rewardCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Reward',
+                    data: rewards,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                }]
+            }
+        });
+
+        var holdsCtx = document.getElementById('holdsChart').getContext('2d');
+        var holdsChart = new Chart(holdsCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Buys',
+                    data: holds,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                }]
+            }
+        });
+
+        var sellsCtx = document.getElementById('sellsChart').getContext('2d');
+        var sellsChart = new Chart(sellsCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Sells',
+                    data: sells,
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                }]
+            }
+        });
+
+        eventSource.onmessage = function(event) {
+            var outputDiv = document.getElementById("output");
+            var data = JSON.parse(event.data);
+            outputDiv.innerHTML += data.message + "\n";
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+            if (data.reward !== null) rewards.push(data.reward);
+            if (data.total_holds !== null) holds.push(data.total_holds);
+            if (data.total_sells !== null) sells.push(data.total_sells);
+
+            labels.push(data.time);
+            rewardChart.update();
+            holdsChart.update();
+            sellsChart.update();
+        };
+    </script>
+</body>
+</html>

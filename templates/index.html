@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Distress Prediction</title>
+    <!-- CSS and JS libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.1/css/bootstrap.min.css"
+          integrity="sha512-T584yQ/tdRR5QwOpfvDfVQUidzfgc2339Lc8uBDtcp/wYu80d7jwBgAxbyMh0a9YM9F8N3tdErpFI8iaGx6x5g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css"
+          integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+</head>
+<style>
+    body {
+        background-color: #1e1e1e;
+        color: #dcdcdc;
+        font-family: Arial, sans-serif;
+    }
+    .df {
+        width: 80rem;
+        height: 5rem;
+    }
+    .cf {
+        padding-left: 120px;
+        min-height: 85vh;
+    }
+    .rt {
+        width: 30vw;
+    }
+    .swiper-container {
+        margin: 20px 0;
+    }
+    .chart-container { width: 50%; display: flex;}
+    canvas{
+        margin: 20px;
+    }
+    .table th, .table td {
+        color: #dcdcdc;
+        border: 1px solid #333;
+    }
+
+</style>
+<body>
+    <div class="container">
+        <h1 class="text-center" style="color: #50b3a2;">Financial Distress Best Attribute Prediction</h1>
+        <h5 class="text-center" style="color: #50b3a2;">According to dataset provided</h5>
+        <div class="chart-container">
+            <canvas id="canvas"></canvas>
+            <canvas id="canvas1"></canvas>
+        </div>
+
+        <div class="cf">
+            <table id="myTable" class="table">
+                <thead>
+                    <tr>
+                        <th class="rt">Attribute Type</th>
+                        <th class="rt">Attribute Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table body will be populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <div class="df"></div>
+    </div>
+    
+    <!-- External JS libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+            integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.1/js/bootstrap.bundle.min.js"
+            integrity="sha512-mULnawDVcCnsk9a4aG1QLZZ6rcce/jSzEGqUkeOLy0b6q0+T6syHrxlsAGH7ZVoqC93Pd0lBqd6WguPWih7VHA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"
+            integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        
+    <script>
+        $(document).ready(function () {
+            let myArray = [];
+
+            let k=1;
+
+            function populateTable(data) {
+                let tableBody = document.querySelector('#myTable tbody');
+                tableBody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    Object.values(row).forEach(value => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+            }
+    
+            // Initial population
+            populateTable(myArray);
+    
+            // Function to update table when array changes dynamically
+            function updateTable(newArray) {
+                myArray = newArray;
+                populateTable(myArray);
+            }
+            function filterAttributes(selectedIndices, allAttributes) {
+                return selectedIndices.map(index => allAttributes[index]);
+            }
+            var labels = [];
+            const config = {
+                type: 'line',
+                data: {
+                    labels: Array(20).fill(""),
+                    datasets: [{
+                        label: "Accuracy",
+                        backgroundColor: 'rgba(75, 192, 192, 1)',
+                        borderColor: 'rgba(75, 192, 192, 0.2)',
+                        data: Array(20).fill(null),
+                        fill: false,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Time'
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
+                            }
+                        }]
+                    }
+                }
+            };
+            const config1 = {
+                type: 'line',
+                data: {
+                    labels: Array(20).fill(""),
+                    datasets: [{
+                        label: "Gain while iteration",
+                        backgroundColor: 'rgba(75, 192, 192, 1)',
+                        borderColor: 'rgba(75, 192, 192, 0.2)',
+                        data: Array(20).fill(null),
+                        fill: false,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Time'
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Value'
+                            }
+                        }]
+                    }
+                }
+            };
+        const context = document.getElementById('canvas').getContext('2d');
+        const context1 = document.getElementById('canvas1').getContext('2d');
+        const lineChart = new Chart(context, config);
+        const lineChart1 = new Chart(context1, config1);
+        const source = new EventSource("/chart-data");
+        const attributes = [
+            { name: 'ID', label: 'Sequential value for different enterprises' },
+            { name: 'QUARTER', label: 'The last day of the quarter' },
+            { name: 'A1', label: 'Total assets' },
+            { name: 'A2', label: 'Current assets' },
+            { name: 'A3', label: 'Availability' },
+            { name: 'A4', label: 'Receivables' },
+            { name: 'A5', label: 'Inventory' },
+            { name: 'A6', label: 'Long-term assets' },
+            { name: 'A7', label: 'Intangible assets' },
+            { name: 'A8', label: 'Tangible assets' },
+            { name: 'A9', label: 'Fixed assets' },
+            { name: 'A10', label: 'Accumulated depreciation' },
+            { name: 'A11', label: 'Accumulated amortization' },
+            { name: 'A12', label: 'Investments' },
+            { name: 'A13', label: 'Total liabilities' },
+            { name: 'A14', label: 'Current liabilities' },
+            { name: 'A15', label: 'Non-current liabilities' },
+            { name: 'A16', label: 'Commitments' },
+            { name: 'A17', label: 'Net worth' },
+            { name: 'A18', label: 'Share capital' },
+            { name: 'A19', label: 'Reserves' },
+            { name: 'A20', label: 'Provisions' },
+            { name: 'A21', label: 'Long term loan' },
+            { name: 'A22', label: 'Gross income' },
+            { name: 'A23', label: 'Expenses' },
+            { name: 'A24', label: 'Net earnings' },
+            { name: 'A25', label: 'Operating expenses' },
+            { name: 'A26', label: 'Operating profit' },
+            { name: 'A27', label: 'Financial result' },
+            { name: 'A28', label: 'Financial expenses' },
+            { name: 'A29', label: 'Profit before tax' },
+            { name: 'A30', label: 'Tax expenses' },
+            { name: 'A31', label: 'Net income' },
+            { name: 'A32', label: 'Cash flows from operating activities' },
+            { name: 'A33', label: 'Cash Flows from Investing' },
+            { name: 'A34', label: 'Cash Flows from Financing' },
+            { name: 'A35', label: 'Outstanding shares' },
+            { name: 'A36', label: 'Current ratio' },
+            { name: 'A37', label: 'Quick ratio' },
+            { name: 'A38', label: 'Cash ratio' },
+            { name: 'A39', label: 'Interest coverage ratio' },
+            { name: 'A40', label: 'Debt ratio' },
+            { name: 'A41', label: 'Tangible asset coverage ratio' },
+            { name: 'A42', label: 'Ratio of equity to debt' },
+            { name: 'A43', label: 'Ratio of commitments to tangible assets' },
+            { name: 'A44', label: 'Liquidity ratio' },
+            { name: 'A45', label: 'Receivable assets ratio' },
+            { name: 'A46', label: 'Fixed Asset Ratio (FAR)' },
+            { name: 'A47', label: 'Ratio of stockholders’ equity to fixed assets' },
+            { name: 'A48', label: 'Current debt ratio' },
+            { name: 'A49', label: 'Operating net profit ratio' },
+            { name: 'A50', label: 'Ratio of receivables to gross income' },
+            { name: 'A51', label: 'Ratio of inventory to income' },
+            { name: 'A52', label: 'Inventory turnover' },
+            { name: 'A53', label: 'Turnover ratio of account payable' },
+            { name: 'A54', label: 'Turnover of current assets' },
+            { name: 'A55', label: 'Ratio of fixed assets to income' },
+            { name: 'A56', label: 'Total capital turnover' },
+            { name: 'A57', label: 'Return On Assets (ROA)' },
+            { name: 'A58', label: 'Ratio of net profit to total assets' },
+            { name: 'A59', label: 'Ratio of net profit to current assets' },
+            { name: 'A60', label: 'Ratio of net profit fixed assets' },
+            { name: 'A61', label: 'Return On Equity (ROE)' },
+            { name: 'A62', label: 'Operating profit ratio' },
+            { name: 'A63', label: 'Ratio of total operating cost to gross revenue' },
+            { name: 'A64', label: 'Expenses to sales Ratio (ER)' },
+            { name: 'A65', label: 'Management Expense Ratio (MER)' },
+            { name: 'A66', label: 'Financial Expense Ratio (FER)' },
+            { name: 'A67', label: 'Free Cash Flow (FCF)' },
+            { name: 'A68', label: 'Ratio of operating cash to net profit' },
+            { name: 'A69', label: 'Ratio of operating cash to income' },
+            { name: 'A70', label: 'Cash recovery rate' },
+            { name: 'A71', label: 'Financial leverage' },
+            { name: 'A72', label: 'Operational leverage' },
+            { name: 'A73', label: 'Combined leverage' },
+            { name: 'A74', label: 'Growth of capital maintenance rate' },
+            { name: 'A75', label: 'Growth of capital accumulation rate' },
+            { name: 'A76', label: 'Growth of total assets rate' },
+            { name: 'A77', label: 'Growth rate of ROE' },
+            { name: 'A78', label: 'Growth rate of net profit' },
+            { name: 'A79', label: 'Growth rate of operating profit' },
+            { name: 'A80', label: 'Growth rate of operating receipt' },
+            { name: 'A81', label: 'Growth rate of operating cost' },
+            { name: 'A82', label: 'Earnings per share' },
+            { name: 'A83', label: 'Net asset value per share (NAVPS)' },
+            { name: 'A84', label: 'Net cash per share' },
+            { name: 'LABEL', label: '0: normal situation; 1: financial distress situation' }
+        ];
+
+        source.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            console.log(data.value2)
+            if (config.data.labels.length === 20) {
+                config.data.labels.shift();
+                config.data.datasets[0].data.shift();
+            }
+            config.data.labels.push(k);
+            config.data.datasets[0].data.push(data.value);
+            lineChart.update();
+            if (config1.data.labels.length === 20) {
+                config1.data.labels.shift();
+                config1.data.datasets[0].data.shift();
+            }
+            config1.data.labels.push(k);
+            config1.data.datasets[0].data.push(data.value1);
+            lineChart1.update();
+            af=data.value2.sort()
+            updateTable(filterAttributes(af, attributes));
+            k+=1;
+        }
+    });
+</script>
+</body>
+</html>
